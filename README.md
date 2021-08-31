@@ -1,4 +1,16 @@
-# React Native Paint
+# React Native SoundPaint
+
+A Web version of the same concept using React: 
+
+SoundPaint lets you listen to your drawing or any pic. In an interactive or semirandom way. In a flexible relationship between colors and musical notes.
+
+Actual state: Forked the repo, edited Readme, etc... 
+No changes to the code yet, but soon.
+
+
+Based on:
+
+## React Native Paint
 
 Minimal implementation of a "Paint" app using React Native and Exponent
 
