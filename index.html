@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SoundPaint Web</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f0f0;
+        }
+        #controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        #colorPicker {
+            width: 200px;
+        }
+        canvas {
+            border: 2px solid #333;
+            background-color: white;
+            cursor: crosshair;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .color-palette {
+            display: flex;
+            gap: 2px;
+            margin-top: 20px;
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .color-key {
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            transition: transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: white;
+        }
+        .color-key.white {
+            border: 2px solid white;
+        }
+        .color-key.black {
+            border: 2px solid black;
+        }
+        .color-key:hover {
+            transform: scale(1.05);
+        }
+        .color-key.selected {
+            border: 2px solid #00f;
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <input type="color" id="colorPicker" value="#000000">
+        <button id="listenButton">Listen</button>
+    </div>
+    <div class="color-palette">
+        <!-- White keys -->
+        <div class="color-key white" data-note="C4" style="background-color: #FF0000">C4</div>
+        <div class="color-key black" data-note="Db4" style="background-color: #FF4000">Db4</div>
+        <div class="color-key white" data-note="D4" style="background-color: #FF8000">D4</div>
+        <div class="color-key black" data-note="Eb4" style="background-color: #FFC000">Eb4</div>
+        <div class="color-key white" data-note="E4" style="background-color: #FFFF00">E4</div>
+        <div class="color-key white" data-note="F4" style="background-color: #C0FF00">F4</div>
+        <div class="color-key black" data-note="Gb4" style="background-color: #80FF00">Gb4</div>
+        <div class="color-key white" data-note="G4" style="background-color: #00FF00">G4</div>
+        <div class="color-key black" data-note="Ab5" style="background-color: #00FF40">Ab5</div>
+        <div class="color-key white" data-note="A5" style="background-color: #00FF80">A5</div>
+        <div class="color-key black" data-note="Bb5" style="background-color: #00FFC0">Bb5</div>
+        <div class="color-key white" data-note="B5" style="background-color: #00FFFF">B5</div>
+    </div>
+    <canvas id="paintCanvas"></canvas>
+    <script src="https://unpkg.com/tone@15.0.1/build/Tone.js"></script>
+    <script>
+        const canvas = document.getElementById('paintCanvas');
+        const ctx = canvas.getContext('2d');
+        const colorPicker = document.getElementById('colorPicker');
+        const listenButton = document.getElementById('listenButton');
+        const pianoKeys = document.querySelectorAll('.piano-key');
+        let selectedKey = null;
+        
+        // Set canvas size
+        canvas.width = window.innerWidth - 200;
+        canvas.height = window.innerHeight - 200;
+
+        // Initialize Tone.js
+        Tone.start();
+        let isListening = false;
+        let synth = new Tone.Synth().toDestination();
+        
+        // Drawing functionality
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+
+        canvas.addEventListener('mousedown', (e) => {
+            isDrawing = true;
+            draw(e);
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (isDrawing) draw(e);
+            if (isListening) {
+                playSoundAtMouse(e);
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            isDrawing = false;
+            ctx.beginPath();
+        });
+
+        canvas.addEventListener('mouseout', () => {
+            isDrawing = false;
+            ctx.beginPath();
+        });
+
+        function draw(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            ctx.lineWidth = 5;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = colorPicker.value;
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            [lastX, lastY] = [x, y];
+        }
+
+        // Sound functionality
+        function playSoundAtMouse(e) {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            // Get pixel color
+            const pixelData = ctx.getImageData(mouseX, mouseY, 1, 1).data;
+            const r = pixelData[0];
+            const g = pixelData[1];
+            const b = pixelData[2];
+            
+            // Convert RGB to note
+            const note = rgbToNote(r, g, b);
+            
+            // Play the note
+            synth.triggerAttackRelease(note, '8n');
+        }
+
+        function rgbToNote(r, g, b) {
+            // Convert RGB to HSV
+            const max = Math.max(r, g, b);
+            const min = Math.min(r, g, b);
+            const delta = max - min;
+            let h = 0;
+
+            if (delta === 0) {
+                h = 0;
+            } else if (max === r) {
+                h = ((g - b) / delta) % 6;
+            } else if (max === g) {
+                h = (b - r) / delta + 2;
+            } else {
+                h = (r - g) / delta + 4;
+            }
+
+            h = Math.round(h * 60);
+            
+            // Map hue to musical notes
+            const notes = ['C4', 'Db4', 'D4', 'Eb4', 'E4', 'F4', 'Gb4', 'G4', 'Ab4', 'A4', 'Bb4', 'B4'];
+            const noteIndex = Math.floor(h / 30);
+            return notes[noteIndex];
+        }
+
+        listenButton.addEventListener('click', () => {
+            isListening = !isListening;
+            listenButton.textContent = isListening ? 'Stop Listening' : 'Listen';
+        });
+
+        // Handle color key clicks
+        const colorKeys = document.querySelectorAll('.color-key');
+        let selectedColor = '#000000';
+
+        // Position the keys based on their x coordinates
+        colorKeys.forEach(key => {
+            const x = key.dataset.x;
+            if (x) {
+                const paletteRect = document.querySelector('.color-palette').getBoundingClientRect();
+                const xPosition = (x / 800) * paletteRect.width;
+                key.style.left = `${xPosition}px`;
+            }
+
+            key.addEventListener('click', () => {
+                // Remove selection from previous key
+                if (selectedKey) {
+                    selectedKey.classList.remove('selected');
+                }
+                
+                // Select new key
+                key.classList.add('selected');
+                selectedKey = key;
+                
+                // Get the color from the style
+                const style = window.getComputedStyle(key);
+                const bgColor = style.backgroundColor;
+                
+                // Extract the hex color
+                const hexColor = bgColor
+                    .match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/)
+                    .slice(1)
+                    .map(n => parseInt(n).toString(16).padStart(2, '0'))
+                    .join('');
+                
+                // Update color picker
+                colorPicker.value = '#' + hexColor;
+                selectedColor = '#' + hexColor;
+                
+                // Play the note
+                if (isListening) {
+                    synth.triggerAttackRelease(key.dataset.note, '8n');
+                }
+            });
+
+            // Hover effect
+            key.addEventListener('mouseenter', () => {
+                if (isListening) {
+                    synth.triggerAttackRelease(key.dataset.note, '8n');
+                }
+            });
+        });
+
+        // Update the drawing function to use selectedColor
+        function draw(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            if (isDrawing) {
+                ctx.lineWidth = 5;
+                ctx.lineCap = 'round';
+                ctx.strokeStyle = selectedColor;
+                ctx.beginPath();
+                ctx.moveTo(lastX, lastY);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+            }
+            [lastX, lastY] = [x, y];
+        }
+
+        colorPicker.addEventListener('change', () => {
+            // Update the current color
+        });
+    </script>
+</body>
+</html>
