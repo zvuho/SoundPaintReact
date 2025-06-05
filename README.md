@@ -1,14 +1,23 @@
-# React Native SoundPaint
+# SoundPaint React
+Intro
+You can try the app with the compiled Windows and Linux executables.
 
-A Web version of the same concept using React: 
+Listen to the colors under your fingertips. 
+Your drawing or any picture, in an interactive or semirandom way. Creating a flexible relationship between colors and musical notes.
 
-SoundPaint lets you listen to your drawing or any pic. In an interactive or semirandom way. In a flexible relationship between colors and musical notes.
+There is a colors palette in the shape of a piano, each key color is calibrated to sound like that piano key when the LISTEN mode is on.
 
-Actual state: Forked the repo, edited Readme, etc... 
-No changes to the code yet, but soon.
+Windsurf said: 
+A sound visualization experiment where colors are mapped to musical notes.
 
+## Current Status
+This is a basic, experimental version with some known issues:
+- The notes to color mapping is incorrect
+- White canvas areas should be silent but may not be
 
-Based on:
+## More Complete Version
+For a more complete prototype, check out the original Processing version:
+[Processing SoundPaint](https://github.com/zvuho/SoundPaint)
 
 ## Screenshot
 
