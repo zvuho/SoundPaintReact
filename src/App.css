@@ -1,0 +1,21 @@
+.App {
+  text-align: center;
+  padding: 20px;
+}
+
+.controls {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.color-picker {
+  width: 200px;
+}
+
+canvas {
+  border: 2px solid #333;
+  background-color: white;
+  cursor: crosshair;
+}

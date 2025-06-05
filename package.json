@@ -1,24 +1,36 @@
 {
-  "name": "signature-example",
-  "version": "0.0.0",
-  "description": "Hello Exponent!",
-  "author": null,
+  "name": "soundpaint-react",
+  "version": "0.1.0",
   "private": true,
-  "main": "main.js",
-  "scripts": {
-    "test": "jest --no-cache --verbose"
-  },
   "dependencies": {
-    "@exponent/ex-navigation": "^1.6.0",
-    "@exponent/vector-icons": "^1.0.4",
-    "exponent": "~12.0.0",
-    "react": "~15.3.2",
-    "react-native": "github:exponentjs/react-native#sdk-12.0.0",
-    "react-native-svg": "^4.3.3"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-scripts": "5.0.1",
+    "tone": "^15.0.1",
+    "react-color": "^2.19.3"
   },
-  "devDependencies": {
-    "eslint": "^3.10.2",
-    "eslint-config-rmotr": "0.0.5",
-    "eslint-plugin-react": "^6.7.1"
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   }
 }
