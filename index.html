@@ -10,12 +10,34 @@
             flex-direction: column;
             align-items: center;
             background-color: #f0f0f0;
+            font-family: Helvetica;
         }
-        #controls {
-            margin-bottom: 20px;
+        .controls-bottom {
+            position: absolute;
+            right: 20px;
+            bottom: 20px;
+        }
+        #footer {
+            padding: 10px;
             display: flex;
-            gap: 20px;
+            justify-content: space-between;
             align-items: center;
+        }
+        .listen-button {
+            margin-left: auto;
+        }
+        .listen-button {
+            padding: 8px 16px;
+            font-size: 14px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .listen-button:hover {
+            background-color: #45a049;
         }
         #colorPicker {
             width: 200px;
@@ -25,6 +47,45 @@
             background-color: white;
             cursor: crosshair;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .color-key {
+            font-family: Helvetica;
+        }
+        
+        .brush-size-label {
+            font-size: 16px;
+            font-family: Helvetica;
+        }
+        
+        .brush-size-container {
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .brush-size-label {
+            font-size: 16px;
+        }
+        
+        .brush-size-slider {
+            width: 200px;
+            height: 10px;
+            -webkit-appearance: none;
+            background: #ddd;
+            border-radius: 5px;
+            outline: none;
+        }
+        
+        .brush-size-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #4CAF50;
+            cursor: pointer;
+            border-radius: 50%;
         }
         .color-palette {
             display: flex;
@@ -44,6 +105,7 @@
             justify-content: center;
             font-size: 12px;
             color: white;
+            font-family: Helvetica;
         }
         .color-key.white {
             border: 4px solid white;
@@ -61,10 +123,6 @@
     </style>
 </head>
 <body>
-    <div id="controls">
-        <input type="color" id="colorPicker" value="#000000">
-        <button id="listenButton">Listen</button>
-    </div>
     <div class="color-palette">
         <!-- White keys -->
         <div class="color-key white" data-note="C4" style="background-color: #FF0000">C4</div>
@@ -75,45 +133,78 @@
         <div class="color-key white" data-note="F4" style="background-color: #C0FF00">F4</div>
         <div class="color-key black" data-note="Gb4" style="background-color: #80FF00">Gb4</div>
         <div class="color-key white" data-note="G4" style="background-color: #00FF00">G4</div>
-        <div class="color-key black" data-note="Ab5" style="background-color: #00FF40">Ab5</div>
-        <div class="color-key white" data-note="A5" style="background-color: #00FF80">A5</div>
-        <div class="color-key black" data-note="Bb5" style="background-color: #00FFC0">Bb5</div>
-        <div class="color-key white" data-note="B5" style="background-color: #00FFFF">B5</div>
+        <div class="color-key black" data-note="Ab4" style="background-color: #00FF40">Ab4</div>
+        <div class="color-key white" data-note="A4" style="background-color: #00FF80">A4</div>
+        <div class="color-key black" data-note="Bb4" style="background-color: #00FFC0">Bb4</div>
+        <div class="color-key white" data-note="B4" style="background-color: #00FFFF">B4</div>
     </div>
     <canvas id="paintCanvas"></canvas>
+    <div id="footer">
+        <div class="brush-size-container">
+            <label class="brush-size-label">BRUSH SIZE</label>
+            <input type="range" id="brushSizeSlider" class="brush-size-slider" min="1" max="200" value="5">
+            <span id="brushSizeValue" class="brush-size-value">5</span>
+        </div>
+        <button id="listenButton" class="listen-button">Listen</button>
+    </div>
+    <style>
+        .brush-size-value {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
     <script src="https://unpkg.com/tone@15.0.1/build/Tone.js"></script>
     <script>
         const canvas = document.getElementById('paintCanvas');
         const ctx = canvas.getContext('2d');
-        const colorPicker = document.getElementById('colorPicker');
         const listenButton = document.getElementById('listenButton');
+        const brushSizeSlider = document.getElementById('brushSizeSlider');
         let selectedKey = null;
         let isDrawing = false;
         let lastX = 0;
         let lastY = 0;
         let isListening = false;
-        let synth = new Tone.Synth().toDestination();
-        
-        // Color key selection
-        const colorKeys = document.querySelectorAll('.color-key');
-        colorKeys.forEach(key => {
-            key.addEventListener('click', () => {
-                // Remove selected class from all keys
-                colorKeys.forEach(k => k.classList.remove('selected'));
-                // Add selected class to clicked key
-                key.classList.add('selected');
-                // Update selected color and stroke color
-                selectedColor = window.getComputedStyle(key).backgroundColor;
-                ctx.strokeStyle = selectedColor;
-            });
-        });
+        let synth = new Tone.FMSynth({
+            harmonicity: 0.5,
+            modulationIndex: 2,
+            envelope: {
+                attack: 0.01,
+                decay: 0.1,
+                sustain: 0.8,
+                release: 0.5
+            },
+            oscillator: {
+                type: "sine"
+            },
+            modulator: {
+                type: "sine"
+            }
+        }).toDestination();
+        let selectedColor = '#000000';
+        const INITIAL_BRUSH_SIZE = 50;
 
-        // Set canvas size
+        // Initialize canvas and Tone.js first
         canvas.width = window.innerWidth - 200;
         canvas.height = window.innerHeight - 200;
-
-        // Initialize Tone.js
+        const footer = document.getElementById('footer');
+        footer.style.width = canvas.width + 'px';
         Tone.start();
+
+        // Set initial brush size
+        brushSizeSlider.value = INITIAL_BRUSH_SIZE;
+        ctx.lineWidth = INITIAL_BRUSH_SIZE;
+
+        // Update brush size when slider changes
+        brushSizeSlider.addEventListener('input', () => {
+            ctx.lineWidth = parseInt(brushSizeSlider.value);
+            const brushSizeValue = document.getElementById('brushSizeValue');
+            brushSizeValue.textContent = brushSizeSlider.value;
+        });
+
+        // Set initial brush size value
+        const brushSizeValue = document.getElementById('brushSizeValue');
+        brushSizeValue.textContent = brushSizeSlider.value;
 
         // Drawing functionality
         canvas.addEventListener('mousedown', (e) => {
@@ -128,7 +219,9 @@
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
 
-                ctx.lineWidth = 5;
+                // Update stroke width from slider
+                ctx.lineWidth = parseInt(brushSizeSlider.value);
+
                 ctx.lineCap = 'round';
                 ctx.strokeStyle = selectedColor;
                 ctx.beginPath();
@@ -152,6 +245,20 @@
             ctx.beginPath();
         });
 
+        // Color key selection
+        const colorKeys = document.querySelectorAll('.color-key');
+        colorKeys.forEach(key => {
+            key.addEventListener('click', () => {
+                // Remove selected class from all keys
+                colorKeys.forEach(k => k.classList.remove('selected'));
+                // Add selected class to clicked key
+                key.classList.add('selected');
+                // Update selected color and stroke color
+                selectedColor = window.getComputedStyle(key).backgroundColor;
+                ctx.strokeStyle = selectedColor;
+            });
+        });
+
         // Sound functionality
         function playSoundAtMouse(e) {
             const rect = canvas.getBoundingClientRect();
@@ -164,8 +271,9 @@
             const g = pixelData[1];
             const b = pixelData[2];
             
-            // Only play sound for pixels where RGB values are <= 250
-            if (r <= 250 && g <= 250 && b <= 250) {
+            console.log(r, g, b);
+            // Play sound for all colors except almost pure white (250,250,250)
+            if (r > 2 || g > 2 || b > 2) {
                 // Convert RGB to note
                 const note = rgbToNote(r, g, b);
                 
@@ -175,28 +283,47 @@
         }
 
         function rgbToNote(r, g, b) {
-            // Convert RGB to HSV
-            const max = Math.max(r, g, b);
-            const min = Math.min(r, g, b);
-            const delta = max - min;
-            let h = 0;
+            // Map RGB values directly to notes based on color key colors
+            const colorKeys = [
+                { color: '#FF0000', note: 'C4' },  // Red
+                { color: '#FF4000', note: 'Db4' }, // Orange
+                { color: '#FF8000', note: 'D4' },  // Orange/Yellow
+                { color: '#FFC000', note: 'Eb4' }, // Yellow
+                { color: '#FFFF00', note: 'E4' },  // Yellow
+                { color: '#C0FF00', note: 'F4' },  // Green/Yellow
+                { color: '#80FF00', note: 'Gb4' }, // Green
+                { color: '#00FF00', note: 'G4' },  // Green
+                { color: '#00FF40', note: 'Ab4' }, // Green/Blue
+                { color: '#00FF80', note: 'A4' },  // Blue/Green
+                { color: '#00FFC0', note: 'Bb4' }, // Blue
+                { color: '#00FFFF', note: 'B4' }   // Blue
+            ];
 
-            if (delta === 0) {
-                h = 0;
-            } else if (max === r) {
-                h = ((g - b) / delta) % 6;
-            } else if (max === g) {
-                h = (b - r) / delta + 2;
-            } else {
-                h = (r - g) / delta + 4;
-            }
-
-            h = Math.round(h * 60);
+            // Find the closest color key based on RGB distance
+            let minDistance = Infinity;
+            let closestNote = 'C4';
             
-            // Map hue to musical notes
-            const notes = ['C4', 'Db4', 'D4', 'Eb4', 'E4', 'F4', 'Gb4', 'G4', 'Ab4', 'A4', 'Bb4', 'B4'];
-            const noteIndex = Math.floor(h / 30);
-            return notes[noteIndex];
+            colorKeys.forEach(key => {
+                // Parse the hex color to RGB
+                const keyColor = key.color;
+                const r2 = parseInt(keyColor.slice(1, 3), 16);
+                const g2 = parseInt(keyColor.slice(3, 5), 16);
+                const b2 = parseInt(keyColor.slice(5, 7), 16);
+                
+                // Calculate Euclidean distance in RGB space
+                const distance = Math.sqrt(
+                    Math.pow(r - r2, 2) +
+                    Math.pow(g - g2, 2) +
+                    Math.pow(b - b2, 2)
+                );
+                
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestNote = key.note;
+                }
+            });
+            
+            return closestNote;
         }
 
         listenButton.addEventListener('click', () => {
@@ -204,16 +331,7 @@
             listenButton.textContent = isListening ? 'Stop Listening' : 'Listen';
         });
 
-        // Position the keys based on their x coordinates
         colorKeys.forEach(key => {
-            const x = key.dataset.x;
-            if (x) {
-                const paletteRect = document.querySelector('.color-palette').getBoundingClientRect();
-                const xPosition = (x / 800) * paletteRect.width;
-                key.style.left = `${xPosition}px`;
-            }
-
-            // Hover effect
             key.addEventListener('mouseenter', () => {
                 if (isListening) {
                     synth.triggerAttackRelease(key.dataset.note, '8n');
@@ -221,7 +339,6 @@
             });
         });
 
-        // Update the drawing function to use selectedColor
         function draw(e) {
             const rect = canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
@@ -239,9 +356,7 @@
             [lastX, lastY] = [x, y];
         }
 
-        colorPicker.addEventListener('change', () => {
-            ctx.strokeStyle = colorPicker.value;
-        });
+
     </script>
 </body>
 </html>
