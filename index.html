@@ -240,7 +240,8 @@
         }
 
         colorPicker.addEventListener('change', () => {
-            ctx.strokeStyle = colorPicker.value;
+            selectedColor = colorPicker.value;
+            ctx.strokeStyle = selectedColor;
         });
     </script>
 </body>
