@@ -141,59 +141,20 @@
         let synth = new Tone.Synth().toDestination();
         let selectedColor = '#000000';
         const INITIAL_BRUSH_SIZE = 5;
-        
+
+        // Initialize canvas and Tone.js first
+        canvas.width = window.innerWidth - 200;
+        canvas.height = window.innerHeight - 200;
+        Tone.start();
+
         // Set initial brush size
         brushSizeSlider.value = INITIAL_BRUSH_SIZE;
         ctx.lineWidth = INITIAL_BRUSH_SIZE;
-        
+
         // Update brush size when slider changes
         brushSizeSlider.addEventListener('input', () => {
             ctx.lineWidth = parseInt(brushSizeSlider.value);
         });
-
-        // Update stroke width during drawing
-        canvas.addEventListener('mousemove', (e) => {
-            if (isDrawing) {
-                const rect = canvas.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-
-                // Update stroke width before drawing
-                ctx.lineWidth = parseInt(brushSizeSlider.value);
-
-                ctx.lineCap = 'round';
-                ctx.strokeStyle = selectedColor;
-                ctx.beginPath();
-                ctx.moveTo(lastX, lastY);
-                ctx.lineTo(x, y);
-                ctx.stroke();
-                [lastX, lastY] = [x, y];
-            }
-            if (isListening) {
-                playSoundAtMouse(e);
-            }
-        });
-        
-        // Color key selection
-        const colorKeys = document.querySelectorAll('.color-key');
-        colorKeys.forEach(key => {
-            key.addEventListener('click', () => {
-                // Remove selected class from all keys
-                colorKeys.forEach(k => k.classList.remove('selected'));
-                // Add selected class to clicked key
-                key.classList.add('selected');
-                // Update selected color and stroke color
-                selectedColor = window.getComputedStyle(key).backgroundColor;
-                ctx.strokeStyle = selectedColor;
-            });
-        });
-
-        // Set canvas size
-        canvas.width = window.innerWidth - 200;
-        canvas.height = window.innerHeight - 200;
-
-        // Initialize Tone.js
-        Tone.start();
 
         // Drawing functionality
         canvas.addEventListener('mousedown', (e) => {
@@ -208,7 +169,9 @@
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
 
-                ctx.lineWidth = 5;
+                // Update stroke width from slider
+                ctx.lineWidth = parseInt(brushSizeSlider.value);
+
                 ctx.lineCap = 'round';
                 ctx.strokeStyle = selectedColor;
                 ctx.beginPath();
@@ -230,6 +193,20 @@
         canvas.addEventListener('mouseout', () => {
             isDrawing = false;
             ctx.beginPath();
+        });
+
+        // Color key selection
+        const colorKeys = document.querySelectorAll('.color-key');
+        colorKeys.forEach(key => {
+            key.addEventListener('click', () => {
+                // Remove selected class from all keys
+                colorKeys.forEach(k => k.classList.remove('selected'));
+                // Add selected class to clicked key
+                key.classList.add('selected');
+                // Update selected color and stroke color
+                selectedColor = window.getComputedStyle(key).backgroundColor;
+                ctx.strokeStyle = selectedColor;
+            });
         });
 
         // Sound functionality
@@ -284,16 +261,7 @@
             listenButton.textContent = isListening ? 'Stop Listening' : 'Listen';
         });
 
-        // Position the keys based on their x coordinates
         colorKeys.forEach(key => {
-            const x = key.dataset.x;
-            if (x) {
-                const paletteRect = document.querySelector('.color-palette').getBoundingClientRect();
-                const xPosition = (x / 800) * paletteRect.width;
-                key.style.left = `${xPosition}px`;
-            }
-
-            // Hover effect
             key.addEventListener('mouseenter', () => {
                 if (isListening) {
                     synth.triggerAttackRelease(key.dataset.note, '8n');
@@ -301,7 +269,6 @@
             });
         });
 
-        // Update the drawing function to use selectedColor
         function draw(e) {
             const rect = canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
