@@ -125,7 +125,15 @@
     <div class="brush-size-container">
         <label class="brush-size-label">BRUSH SIZE</label>
         <input type="range" id="brushSizeSlider" class="brush-size-slider" min="1" max="200" value="5">
+        <span id="brushSizeValue" class="brush-size-value">5</span>
     </div>
+    <style>
+        .brush-size-value {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
     <script src="https://unpkg.com/tone@15.0.1/build/Tone.js"></script>
     <script>
         const canvas = document.getElementById('paintCanvas');
@@ -154,7 +162,13 @@
         // Update brush size when slider changes
         brushSizeSlider.addEventListener('input', () => {
             ctx.lineWidth = parseInt(brushSizeSlider.value);
+            const brushSizeValue = document.getElementById('brushSizeValue');
+            brushSizeValue.textContent = brushSizeSlider.value;
         });
+
+        // Set initial brush size value
+        const brushSizeValue = document.getElementById('brushSizeValue');
+        brushSizeValue.textContent = brushSizeSlider.value;
 
         // Drawing functionality
         canvas.addEventListener('mousedown', (e) => {
@@ -221,8 +235,8 @@
             const g = pixelData[1];
             const b = pixelData[2];
             
-            // Only play sound for pixels where RGB values are <= 250
-            if (r <= 250 && g <= 250 && b <= 250) {
+            // Play sound for all colors except pure white (255,255,255)
+            if (r < 250 || g < 250 || b < 250) {
                 // Convert RGB to note
                 const note = rgbToNote(r, g, b);
                 
